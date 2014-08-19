@@ -1,0 +1,103 @@
+!obj:pylearn2.train.Train {
+  dataset : &train !pkl: "${TRAIN_PKL}",
+  
+  model : !obj:pylearn2.models.mlp.MLP {
+    layers: [
+      !obj:pylearn2.models.mlp.RectifiedLinear {
+                     layer_name: 'h0',
+                     dim: ${H0_DIM},
+                     #sparse_init: 15,
+                     irange: .02,
+                     max_col_norm: 2.0,
+      },
+
+      !obj:pylearn2.models.maxout.Maxout {
+                  layer_name: 'h1',
+                  num_units: ${H1_DIM},
+                  num_pieces: 5,
+                  irange: .02,
+                  # Rather than using weight decay, we constrain the norms of the weight vectors
+                  max_col_norm: 2.
+              },      
+
+ 
+
+
+      !obj:loglinear_cost.LogNormalLogLikelihood {
+        layer_name: 'out',
+        irange: 0.,
+        #W_lr_scale: 2.0,
+        #max_col_norm: 1.0,
+        init_bias : 0.5
+      }
+
+    ],
+    nvis: ${INPUT_DIM},
+  },
+  
+
+  algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+    # The learning rate determines how big of steps the learning algorithm
+    # takes.  Here we use fairly big steps initially because we have a
+    # learning rate adjustment scheme that will scale them down if
+    # necessary.
+    learning_rate: 0.1,
+
+    learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {
+            init_momentum: 0.5
+    },
+    
+    #cost: !obj:pylearn2.costs.mlp.dropout.Dropout {
+             #input_include_probs: { 'h0' : 1.0 },
+             #input_scales: { 'h0' :  1.0 }
+    #},    
+
+    # Each gradient step will be based on this many examples
+    batch_size : 200,
+    
+    #monitoring_batches : 50,
+    
+    monitoring_dataset: {
+      #train: *train,
+      valid: !pkl: "${DEV_PKL}",
+    },
+ 
+
+    # We'll use the monitoring dataset to figure out when to stop training.
+    #
+    # In this case, we stop if there is less than a 1% decrease in the
+    # training error in the last epoch.  You'll notice that the learned
+    # features are a bit noisy. If you'd like nice smooth features you can
+    # make this criterion stricter so that the model will train for longer.
+    # (setting N to 10 should make the weights prettier, but will make it
+    # run a lot longer)
+
+    #termination_criterion : !obj:pylearn2.termination_criteria.MonitorBased {
+    #    prop_decrease : 0.01,
+    #    N : 1,
+    #}
+    termination_criterion : !obj:pylearn2.termination_criteria.MonitorBased {
+        channel_name: "valid_objective",
+        prop_decrease: 0.,
+        N: 10
+    },
+    #update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
+    #    decay_factor: 1.00001,
+    #    min_lr: .001
+    #}
+    
+  },
+  
+  extensions: [
+    !obj:pylearn2.training_algorithms.sgd.LinearDecayOverEpoch {
+        start: 5,
+        saturate: 20,
+        decay_factor: 0.1
+    },
+    !obj:pylearn2.train_extensions.best_params.MonitorBasedSaveBest {
+       channel_name: "valid_objective",
+       save_path: "${MODEL_SAVE_PATH}"
+    },
+  ],
+  
+}
