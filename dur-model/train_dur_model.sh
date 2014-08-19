@@ -1,5 +1,7 @@
 #!/bin/bash
 
+
+
 stage=0
 cmd=run.pl
 cuda_cmd=run.pl
@@ -40,8 +42,8 @@ dir=$4
 
 
 if ! [ $nj -eq `cat $alidir/num_jobs` ]; then
-    echo "$0: Number of jobs mismatch with alignments dir: $nj versus `cat $alidir/num_jobs`";
-    exit 1;
+  echo "$0: Number of jobs mismatch with alignments dir: $nj versus `cat $alidir/num_jobs`";
+  exit 1;
 fi
 
 # Create lattices from aligned training data
@@ -54,6 +56,7 @@ fi
 if [ -n "$stress_dict" ]; then
   stress_arg="--stress $stress_dict";
 fi
+
 
 # Extract training data
 if [ $stage -le 2 ]; then
@@ -92,6 +95,6 @@ if [ $stage -le 4 ]; then
   H1_DIM=300 \
   envsubst > $dir/durmodel.yaml
   $cuda_cmd $dir/log/train.log \
-    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/lat-model/pylearn2/ \
+    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/pylearn2/ \
     $pylearn_dir/pylearn2/scripts/train.py $dir/durmodel.yaml || exit 1;
 fi
