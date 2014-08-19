@@ -39,7 +39,7 @@ class FeatureTests(unittest.TestCase):
         self.assertEquals([["AH", "B"], ["S", "T", "EY", "N"]], durmodel_utils.syllabify("AH B S T EY N".split(), language='ENGLISH',
                                                                                          nonsilence_phonemes="AH B S T EY N".split()))
 
-    def _testFullFeatures(self):
+    def _test_linear_lattice(self):
         seqs = []
         words = ["<eps>", "komm", "Tanel"]
         #komm
@@ -62,10 +62,6 @@ class FeatureTests(unittest.TestCase):
             print "%d    %s" % (d, " ".join(f))
         #pass
 
-
-
-
-
     def test_compile_features_for_word(self):
         context = {-2: set([("foo", 1), ("bar", 1), ("dur", 0.377)]), -1: set([("fii", 1), ("dur", 0.553)]), +1: set([("</s>", 1)])}
         local_feature_and_dur_seq = [(set([("bii", 1), ("boo", 1)]), 5), (set([("buu", 1), ("bee", 1)]), 6)]
@@ -80,63 +76,6 @@ class FeatureTests(unittest.TestCase):
         self.assert_(("pos+1:</s>", 1) in result[-1][0])
 
         self.assert_(("pos-1:dur", durmodel_utils.dur_function(5)) in result[-1][0])
-
-
-    def _test_english(self):
-        phone_map = {}
-        for l in open(os.path.dirname(__file__) + "/test_data/en/phones.txt"):
-            ss = l.split()
-            phone_map[int(ss[1])] = ss[0].partition("_")[0]
-
-        word_list = []
-        for l in open(os.path.dirname(__file__) + "/test_data/en/words.txt"):
-            word_list.append(l.split()[0])
-
-        #ONCE
-        word_id = 7119
-        seq = [int(x) for x in "146_146_146_146_146_146_146_146_146_146_146_146_146_146_146_146_16_16_16_16_16_16_16_96_96_96_96_96_119_119_119_119_119_119_119_119_119_119".split("_")]
-        stress_dict = durmodel_utils.load_stress_dict(os.path.dirname(__file__) + "/test_data/en/cmudict.0.7a")
-        features_and_dur_seq = durmodel_utils.make_local(word_id, seq, phone_map, word_list, language='ENGLISH', stress_dict=stress_dict)
-        self.assert_('consonant' in features_and_dur_seq[-1][0])
-        self.assert_('nasal' in features_and_dur_seq[-2][0])
-        self.assert_('stress1' not in features_and_dur_seq[0][0])
-        self.assert_('stress1' in features_and_dur_seq[1][0])
-
-        #ARTHUR
-        word_id = 563
-        seq = [int(x) for x in "6_6_6_6_6_116_116_116_116_116_116_116_116_116_116_116_132_132_132_132_132_132_132_132_132_132_132_132_132_51_51_51_51_51_51_51_51_51_51_51_51_51_51_51".split("_")]
-        features_and_dur_seq = durmodel_utils.make_local(word_id, seq, phone_map, word_list, language='ENGLISH', stress_dict=stress_dict)
-        self.assert_('syllable=2' in features_and_dur_seq[-1][0])
-        print features_and_dur_seq
-
-
-    def _test_fisher(self):
-        phone_map = {}
-        for l in open(os.path.dirname(__file__) + "/test_data/fisher_english/phones.txt"):
-            ss = l.split()
-            phone_map[int(ss[1])] = ss[0].partition("_")[0]
-
-        word_list = []
-        for l in open(os.path.dirname(__file__) + "/test_data/fisher_english/words.txt"):
-            word_list.append(l.split()[0])
-
-        #ONCE
-        word_id = 21442
-        seq = [int(x) for x in "161_161_161_161_161_31_31_31_31_111_111_111_111_111_134_134_134_134_134_134".split("_")]
-        stress_dict = durmodel_utils.load_stress_dict(os.path.dirname(__file__) + "/test_data/fisher_english/cmudict.0.7a_lowercase")
-        features_and_dur_seq = durmodel_utils.make_local(word_id, seq, phone_map, word_list, language='ENGLISH', stress_dict=stress_dict)
-        self.assert_('consonant' in features_and_dur_seq[-1][0])
-        self.assert_('nasal' in features_and_dur_seq[-2][0])
-        self.assert_('stress1' not in features_and_dur_seq[0][0])
-        self.assert_('stress1' in features_and_dur_seq[1][0])
-
-        #ARTHUR
-        word_id = 1650
-        seq = [int(x) for x in "21_21_21_21_21_21_21_21_21_21_21_21_21_21_131_131_131_131_131_131_147_147_147_147_147_147_147_147_147_147_147_147_147_147_66_66_66_66_66_66_66_66_66".split("_")]
-        features_and_dur_seq = durmodel_utils.make_local(word_id, seq, phone_map, word_list, language='ENGLISH', stress_dict=stress_dict)
-        self.assert_('syllable=2' in features_and_dur_seq[-1][0])
-        print features_and_dur_seq
-
 
     def test_tedlium(self):
         transitions = durmodel_utils.read_transitions(os.path.dirname(__file__) + "/test_data/tedlium/transitions.txt")

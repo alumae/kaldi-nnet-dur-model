@@ -76,7 +76,7 @@ if [ $stage -le 1 ]; then
   $cuda_cmd JOB=1:$nj $decode_dir/log/process_lattice.JOB.log \
     set -o pipefail \; \
     zcat $decode_dir/ali_lat.JOB.gz \| \
-    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=./local/lat-model/pylearn2/ \
+    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/lat-model/pylearn2/ \
       local/lat-model/process_lattice.py \
         --left-context 3 \
         --right-context 3 \
@@ -102,7 +102,7 @@ if [ $stage -le 2 ]; then
       $cmd JOB=1:$nj $extended_decode_dir/log/extended_lat_to_lat.JOB.log \
         set -o pipefail \; \
         zcat $decode_dir/ali_lat_extended.JOB.gz \| \
-        local/lat-model/extended_lat_to_lat.py $scale $penalty \| \
+        dur-model/python/lat-model/extended_lat_to_lat.py $scale $penalty \| \
         gzip -c \> $extended_decode_dir/lat.JOB.gz || exit 1
         
       if ! $skip_scoring ; then

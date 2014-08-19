@@ -9,6 +9,8 @@ language=ENGLISH
 stress_dict=
 pylearn_dir=~/tools/pylearn2
 
+
+
 echo "$0 $@"  # Print the command line for logging
 
 [ -f path.sh ] && . ./path.sh # source the path.
@@ -44,7 +46,7 @@ fi
 
 # Create lattices from aligned training data
 if [ $stage -le 1 ]; then
-  local/ali_to_phone_lattice.sh --nj $nj --cmd "$cmd" \
+  dur-model/ali_to_phone_lattice.sh --nj $nj --cmd "$cmd" \
     $data $lang $alidir ${alidir}_phone_lat || exit 1;
 fi
 
@@ -60,7 +62,7 @@ if [ $stage -le 2 ]; then
   show-transitions $lang/phones.txt $alidir/final.mdl > $dir/transitions.txt || exit 1;
 
   $cmd JOB=1:$nj $dir/log/lat_to_data.JOB.log \
-    ./local/lat-model/lat_to_data.py \
+    dur-model/python/lat-model/lat_to_data.py \
       --left-context 3 \
       --right-context 3 \
       --language $language \
@@ -75,13 +77,13 @@ if [ $stage -le 3 ]; then
   $cmd --mem=16g $dir/log/aggregate_data.log \
   for i in `seq 1 $nj`\; do \
     echo $dir/ali-lat.\$i.pkl.joblib $dir/ali-lat.\$i.features\; done \| \
-    xargs local/lat-model/aggregate_data.py --save $dir/ali-lat.pkl.joblib --savedev $dir/ali-lat_dev.pkl.joblib --write-features $dir/ali-lat.features || exit 1;
+    xargs dur-model/python/lat-model/aggregate_data.py --save $dir/ali-lat.pkl.joblib --savedev $dir/ali-lat_dev.pkl.joblib --write-features $dir/ali-lat.features || exit 1;
 fi
 
 # Train a model
 if [ $stage -le 4 ]; then
   echo "Training duration model"
-  cat etc/durmodel_template.yaml | \
+  cat dur-model/durmodel_template.yaml | \
   MODEL_SAVE_PATH=$dir/durmodel_best.pkl \
   TRAIN_PKL=$dir/ali-lat.pkl.joblib \
   DEV_PKL=$dir/ali-lat_dev.pkl.joblib \
@@ -90,6 +92,6 @@ if [ $stage -le 4 ]; then
   H1_DIM=300 \
   envsubst > $dir/durmodel.yaml
   $cuda_cmd $dir/log/train.log \
-    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=./local/lat-model/pylearn2/ \
+    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/lat-model/pylearn2/ \
     $pylearn_dir/pylearn2/scripts/train.py $dir/durmodel.yaml || exit 1;
 fi
