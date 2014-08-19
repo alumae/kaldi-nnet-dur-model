@@ -1,0 +1,16 @@
+INTRODUCTION
+============
+
+Implementation of a neural network phone duration model, as described in
+the paper:
+
+Tanel Alumäe. Neural network phone duration model for speech recognition. 
+Interspeech 2014, Singapore.
+https://phon.ioc.ee/dokuwiki/lib/exe/fetch.php?media=people:tanel:icassp2014-durmodel.pdf
+
+
+
+USAGE
+=====
+
+TODO
