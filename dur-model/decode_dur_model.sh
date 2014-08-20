@@ -34,7 +34,7 @@ if [ $# -ne 6 ]; then
   echo "    --stress-dict file              # Dictionary with lexical stress "    
   echo
   echo "e.g.:"
-  echo "local/train_dur_model.sh data/lang exp/tri3/graph data/train data/lang exp/tri3a_ali exp/durmodel_tri3a"
+  echo "dur-model/decode_dur_model.sh data/lang exp/tri3/graph data/train data/lang exp/tri3a_ali exp/durmodel_tri3a"
   echo "Produces duration model in in: exp/durmodel_tri3a"
   exit 1;
 fi
@@ -76,8 +76,8 @@ if [ $stage -le 1 ]; then
   $cuda_cmd JOB=1:$nj $decode_dir/log/process_lattice.JOB.log \
     set -o pipefail \; \
     zcat $decode_dir/ali_lat.JOB.gz \| \
-    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/lat-model/pylearn2/ \
-      local/lat-model/process_lattice.py \
+    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/pylearn2/ \
+      ./dur-model/python/lat-model/process_lattice.py \
         --left-context 3 \
         --right-context 3 \
         --read-features $dur_model_dir/ali-lat.features \

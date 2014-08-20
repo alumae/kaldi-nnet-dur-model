@@ -45,7 +45,7 @@ fi
 if [ $stage -le 2 ]; then
   # Rescore dev lattices using the duration model
   ./dur-model/decode_dur_model.sh --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --nj $decode_nj \
-    --language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict local/lat-model/data/en/cmudict.0.7a.lc \
+    --language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
     --scales "0.2 0.3" --penalties "0.15 0.18 0.20" \
     --stage 0 \
     data/lang \
@@ -56,10 +56,10 @@ if [ $stage -le 2 ]; then
     exp/dur_model_tri3_mmi_b0.1/decode_dev_it4 || exit 1
 fi
 
-if [ $stage -le 1 ]; then
+if [ $stage -le 3 ]; then
   # Rescore test lattices using the duration model
   ./dur-model/decode_dur_model.sh --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --nj $decode_nj \
-    --language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict local/lat-model/data/en/cmudict.0.7a.lc \
+    --language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
     --scales "0.2 0.3" --penalties "0.15 0.18 0.20" \
     --stage 0 \
     data/lang \
