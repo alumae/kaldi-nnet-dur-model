@@ -60,7 +60,7 @@ if [ $stage -le 0 ]; then
   mkdir -p $dur_model_dir/decode/log
   $cmd JOB=1:$nj $decode_dir/log/lattice-to-phone-lattice.JOB.log \
     lattice-align-words $graphdir/phones/word_boundary.int \
-      $src_decode_dir/../final.mdl "ark:gunzip -c $src_decode_dir/lat.JOB.gz\|" ark,t:- \| \
+      $src_decode_dir/../final.mdl "ark:gunzip -c $src_decode_dir/lat.JOB.gz \|" ark,t:- \| \
      gzip -c \> $decode_dir/ali_lat.JOB.gz || exit 1
 fi
 
