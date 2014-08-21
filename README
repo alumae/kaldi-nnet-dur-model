@@ -8,9 +8,47 @@ Tanel Alumäe. Neural network phone duration model for speech recognition.
 Interspeech 2014, Singapore.
 https://phon.ioc.ee/dokuwiki/lib/exe/fetch.php?media=people:tanel:icassp2014-durmodel.pdf
 
+DEPENDENCIES
+============
 
-
+  * Python 2.6 (with argparse) or 2.7
+  * Theano
+  * Pylearn2
+  
 USAGE
 =====
 
-TODO
+See `run_tedlium.sh` for a sample script that trains a duration model
+on TEDLIUM data, on top of already trained MMI triphone models. The 
+improvement on TEDLIUM data is very small, however. Larger improvements
+can be expected for languages that have phonetic duration opposition,
+i.e., a phoneme can have either short or long duration, and the duration
+changes the meaning of a word (see http://en.wikipedia.org/wiki/Length_(phonetics))
+
+Duration model is trained using Pylearn2 that itself uses Theano. Theano
+can use GPU which makes the training much faster (takes about 1 hour on
+TEDLIUM data, when using a Tesla K20). You should use the ~/.theanorc 
+file to instruct Theano to use the GPU:
+
+[global]
+device = gpu 
+floatX = float32
+
+If you use a cluster, you should also instruct Theano to use a 
+machine-local temporary directory for its compilation directory. Set the
+following line in the [global] section of the .theanorc file:
+
+base_compiledir=/tmp/%(user)s/theano.NOBACKUP
+
+CITING
+======
+
+You can cite the following paper if you use this software:
+
+@InProceedings{alumae2014,
+  author={Alum\"{a}e, Tanel},
+  title={Neural network phone duration model for speech recognition},
+  booktitle={Interspeech 2014},
+  address={Singapore},
+  year=2014
+}
