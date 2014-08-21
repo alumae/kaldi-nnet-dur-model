@@ -10,7 +10,7 @@ nj=4
 language=ENGLISH
 stress_dict=
 pylearn_dir=~/tools/pylearn2
-
+aggregate_data_args=
 
 
 echo "$0 $@"  # Print the command line for logging
@@ -77,7 +77,7 @@ fi
 
 # Accumulate training data to a single file
 if [ $stage -le 3 ]; then
-  $cmd --mem=16g $dir/log/aggregate_data.log \
+  $cmd $aggregate_data_args $dir/log/aggregate_data.log \
   for i in `seq 1 $nj`\; do \
     echo $dir/ali-lat.\$i.pkl.joblib $dir/ali-lat.\$i.features\; done \| \
     xargs dur-model/python/lat-model/aggregate_data.py --save $dir/ali-lat.pkl.joblib --savedev $dir/ali-lat_dev.pkl.joblib --write-features $dir/ali-lat.features || exit 1;
