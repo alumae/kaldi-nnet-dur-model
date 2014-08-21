@@ -24,6 +24,9 @@ decode_nj=8      # Must be the same as when decoding using the baseline
 
 stage=0 # resume training with --stage=N
 pylearn_dir=~/tools/pylearn2
+# Aggregating traing data for duration model needs more RAM than default in our SLURM
+aggregate_data_args="--mem=8g"
+
 
 . utils/parse_options.sh || exit 1;
 
@@ -35,7 +38,7 @@ fi
 
 if [ $stage -le 1 ]; then
   # Train a duration model based on alignments in exp/tri3_mmi_b0.1_ali
-  ./dur-model/train_dur_model.sh --nj $nj --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --pylearn-dir $pylearn_dir \
+  ./dur-model/train_dur_model.sh --nj $nj --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --pylearn-dir $pylearn_dir --aggregate-data-args="$aggregate_data_args" \
     --stage 0 \
     --language ENGLISH \
     --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \

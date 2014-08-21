@@ -76,7 +76,7 @@ if [ $stage -le 1 ]; then
   $cuda_cmd JOB=1:$nj $decode_dir/log/process_lattice.JOB.log \
     set -o pipefail \; \
     zcat $decode_dir/ali_lat.JOB.gz \| \
-    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/pylearn2/ \
+    PYTHONPATH=dur-model/python/pylearn2/ \
       ./dur-model/python/lat-model/process_lattice.py \
         --left-context 3 \
         --right-context 3 \

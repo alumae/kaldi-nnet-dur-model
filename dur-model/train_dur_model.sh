@@ -95,6 +95,6 @@ if [ $stage -le 4 ]; then
   H1_DIM=300 \
   envsubst > $dir/durmodel.yaml
   $cuda_cmd $dir/log/train.log \
-    THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 PYTHONPATH=dur-model/python/pylearn2/ \
+    PYTHONPATH=dur-model/python/pylearn2/ \
     $pylearn_dir/pylearn2/scripts/train.py $dir/durmodel.yaml || exit 1;
 fi
