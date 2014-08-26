@@ -103,9 +103,9 @@ def encode(alist):
 def syllabify(phonemes, language, nonsilence_phonemes):
     syllabifier_conf = LANGUAGES[language]['syllabifier_conf']
     if syllabifier_conf is None:
-        return [[0] * len(phonemes)]
+        return None
     if len(phonemes) == 1 and phonemes[0] not in nonsilence_phonemes:
-        return phonemes
+        return None
 
     syllables = syllabifier.syllabify(syllabifier_conf, phonemes)
     return [s[1] + s[2] + s[3] for s in syllables]
@@ -166,12 +166,14 @@ def make_local(start_frame, word_id, frames, transitions, word_list, nonsilence_
 
     features_and_dur_seq = []
     syllables = syllabify([p[0] for p in phone_rl_names], language, nonsilence_phonemes)
-    syllable_ids = []
-    i = 1
-    for s in syllables:
-        for p in s:
-            syllable_ids.append(i)
-        i += 1
+    syllable_ids = None
+    if syllables:
+        syllable_ids = []
+        i = 1
+        for s in syllables:
+            for p in s:
+                syllable_ids.append(i)
+            i += 1
     i = 0
     current_start_frame = start_frame
     for (phone, dur) in phone_rl_names:
@@ -180,15 +182,18 @@ def make_local(start_frame, word_id, frames, transitions, word_list, nonsilence_
         for (kl, phonemes) in LANGUAGES[language]["phoneme_classes"].iteritems():
             if phone in phonemes:
                 features.append((kl, 1))
-        features.append(("syllable", syllable_ids[i]))
+        if syllable_ids:
+            features.append(("syllable", syllable_ids[i]))
 
         features_and_dur_seq.append((features, dur))
 
         i += 1
         current_start_frame += dur
-
-    features_and_dur_seq[0][0].append(("word_initial", 1))
-    features_and_dur_seq[-1][0].append(("word_final", 1))
+    if len(phone_rl_names) > 1:
+        features_and_dur_seq[0][0].append(("word_initial", 1))
+        features_and_dur_seq[-1][0].append(("word_final", 1))
+    elif phone_rl_names[0][0] in nonsilence_phonemes:
+        features_and_dur_seq[0][0].append(("single_phoneme", 1))
     if stress_dict:
         stress = get_stress(word, [p[0].upper() for p in phone_rl_names], stress_dict)
         for i, s in enumerate(stress):

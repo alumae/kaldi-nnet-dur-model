@@ -12,7 +12,7 @@ pylearn_dir=~/tools/pylearn2
 scales="0.3 0.4 0.5"
 penalties="0.1 0.15 0.20"
 
-fillers="<sil>"
+fillers="\<sil\>"
 
 score_cmd=./local/score.sh
 stage=0
@@ -30,7 +30,7 @@ if [ $# -ne 6 ]; then
   echo "    --cuda-cmd                      # specify how to run the neural network command (done using Theano/Pylearn)."
   echo "    --stage (0|1|2)                 # start training script from part-way through."
   echo "    --language ENGLISH|ESTONIAN|FINNISH  # language of the data."
-  echo "    --fillers filler1,filler2       # comma-seperated list of filler words."
+  echo "    --fillers filler1,filler2       # comma-seperated list of filler words (<sil> should escaped as '\<sil\>')."
   echo "    --stress-dict file              # Dictionary with lexical stress "    
   echo
   echo "e.g.:"

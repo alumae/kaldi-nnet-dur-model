@@ -39,6 +39,10 @@ class FeatureTests(unittest.TestCase):
         self.assertEquals([["AH", "B"], ["S", "T", "EY", "N"]], durmodel_utils.syllabify("AH B S T EY N".split(), language='ENGLISH',
                                                                                          nonsilence_phonemes="AH B S T EY N".split()))
 
+        self.assertEquals([], durmodel_utils.syllabify("SIL".split(), language='ENGLISH',
+                                                                                         nonsilence_phonemes="AH B S T EY N".split()))
+
+
     def _test_linear_lattice(self):
         seqs = []
         words = ["<eps>", "komm", "Tanel"]
