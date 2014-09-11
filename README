@@ -40,6 +40,12 @@ following line in the [global] section of the .theanorc file:
 
 base_compiledir=/tmp/%(user)s/theano.NOBACKUP
 
+
+ADDING A NEW LANGUAGE
+=====================
+
+All language specific details are defined in `dur-model/python/lat-model/data/languages.yaml`.
+
 CITING
 ======
 

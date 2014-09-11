@@ -90,7 +90,7 @@ fi
 #%WER 23.3 | 507 17792 | 81.9 14.4 3.7 5.2 23.3 93.7 | -0.137 | exp/dur_model_tri3_mmi_b0.1/decode_dev_it4_s0.2_p0.20/score_13/ctm.filt.filt.sys
 #%WER 23.2 | 507 17792 | 81.8 14.6 3.6 5.0 23.2 93.7 | -0.141 | exp/dur_model_tri3_mmi_b0.1/decode_dev_it4_s0.3_p0.15/score_15/ctm.filt.filt.sys
 #%WER 23.2 | 507 17792 | 82.1 14.4 3.5 5.4 23.2 93.7 | -0.167 | exp/dur_model_tri3_mmi_b0.1/decode_dev_it4_s0.3_p0.18/score_13/ctm.filt.filt.sys
-#%WER 23.2 | 507 17792 | 81.9 14.4 3.7 5.1 23.2 93.5 | -0.141 | exp/dur_model_tri3_mmi_b0.1/decode_dev_it4_s0.3_p0.20/score_14/ctm.filt.filt.sys
+#%WER 23.2 | 507 17792 | 81.9 14.4 3.7 5.1 23.2 93.5 | -0.141 | exp/dur_model_t ri3_mmi_b0.1/decode_dev_it4_s0.3_p0.20/score_14/ctm.filt.filt.sys
 
 
 #TEST SPEAKERS

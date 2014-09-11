@@ -30,6 +30,7 @@ class FeatureTests(unittest.TestCase):
     #    self.assert_("syllable=1" in features_and_dur_seq[0][0])
 
     def test_syllabify(self):
+        print durmodel_utils.LANGUAGES
         self.assertEquals([["t", "a"], ["n", "e", "l"]], durmodel_utils.syllabify(["t", "a", "n", "e", "l"], language='ESTONIAN',
                                                                                   nonsilence_phonemes=set('t a n e l'.split())))
         self.assertEquals([["k", "o"], ["mm", "i"]], durmodel_utils.syllabify(["k", "o", "mm", "i"], language='ESTONIAN',
@@ -39,7 +40,7 @@ class FeatureTests(unittest.TestCase):
         self.assertEquals([["AH", "B"], ["S", "T", "EY", "N"]], durmodel_utils.syllabify("AH B S T EY N".split(), language='ENGLISH',
                                                                                          nonsilence_phonemes="AH B S T EY N".split()))
 
-        self.assertEquals([], durmodel_utils.syllabify("SIL".split(), language='ENGLISH',
+        self.assertEquals(None, durmodel_utils.syllabify("SIL".split(), language='ENGLISH',
                                                                                          nonsilence_phonemes="AH B S T EY N".split()))
 
 

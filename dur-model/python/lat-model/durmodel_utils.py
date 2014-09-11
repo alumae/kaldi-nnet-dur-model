@@ -9,77 +9,10 @@ from itertools import groupby
 import math
 import re
 import syllabifier
+import yaml
+import os
 
-phoneme_classes = {"Vowel": u"a e i o u ou ae oe ue".split(),
-                   "Consonant": u"f h j k l m n p r s sh t v".split(),
-                   "Stop": u"p k t".split(),
-                   "Labiodental": u"f v".split(),
-                   "fricative": u"f v s sh h".split(),
-                   "Nasal": u"m n".split(),
-                   "Liquid": u"l r".split(),
-                   "Sibil": u"sh s".split()}
-
-extended_phoneme_classes = {}
-all_short_phonemes = set()
-for (klass, _phonemes) in phoneme_classes.iteritems():
-    extended_phoneme_classes[klass] = _phonemes + [phoneme * 2 for phoneme in _phonemes]
-    #extended_phoneme_classes[klass + "_short"] = phonemes
-    #extended_phoneme_classes[klass + "_long"] = [phoneme * 2 for phoneme in phonemes]
-    for phoneme in _phonemes:
-        all_short_phonemes.add(phoneme)
-
-#extended_phoneme_classes["Short"] = all_short_phonemes
-extended_phoneme_classes["Long"] = [p * 2 for p in all_short_phonemes]
-
-en_phoneme_classes = {
-    'consonant': ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V',
-                  'W', 'Y', 'Z', 'ZH'],
-    'vowel': ['AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'],
-    'stop': ['P', 'PD', 'B', 'T', 'D', 'K', 'G', 'CH', 'JH'],
-    'nasal': ['M', 'N', 'NG'],
-    'fricative': ['S', 'SH', 'Z', 'F', 'V', 'TH', 'DH', 'ZH', 'HH'],
-    #'diphthong' : ['AY', 'EY', 'OW', 'OY', 'UW', 'AW'],
-    'semivowel': ['L', 'R', 'ER', 'W', 'Y']
-}
-
-
-## Finnish
-
-fi_phoneme_classes = {"Vowel": u"a e i o u ä ö ü".split(),
-                      "Consonant": u"f h j k l m n p r s t v q b d g".split(),
-                      "Stop1": u"b g d".split(),
-                      "Stop2": u"p k t q".split(),
-                      "Labiodental": u"f v".split(),
-                      "fricative": u"f v s h".split(),
-                      "Nasal": u"m n".split(),
-                      "Liquid": u"l r".split()}
-
-fi_extended_phoneme_classes = {}
-fi_all_short_phonemes = set()
-for (klass, phonemes) in fi_phoneme_classes.iteritems():
-    fi_extended_phoneme_classes[klass] = phonemes + [phoneme * 2 for phoneme in phonemes]
-    for phoneme in phonemes:
-        fi_all_short_phonemes.add(phoneme)
-
-fi_extended_phoneme_classes["Long"] = [p * 2 for p in fi_all_short_phonemes]
-
-
-
-LANGUAGES = {
-    "ESTONIAN": {
-        "phoneme_classes": extended_phoneme_classes,
-        "syllabifier_conf": syllabifier.Estonian
-    },
-    "ENGLISH": {
-        "phoneme_classes": en_phoneme_classes,
-        "syllabifier_conf": syllabifier.English
-    },
-    "FINNISH": {
-        "phoneme_classes": fi_phoneme_classes,
-        "syllabifier_conf": None
-    }
-
-}
+LANGUAGES = yaml.load(open(os.path.dirname(__file__) + '/data/languages.yaml'))
 
 LEFT_CONTEXT = 2
 RIGHT_CONTEXT = 2
@@ -101,7 +34,7 @@ def encode(alist):
     return [(key, len(list(group))) for key, group in groupby(alist)]
 
 def syllabify(phonemes, language, nonsilence_phonemes):
-    syllabifier_conf = LANGUAGES[language]['syllabifier_conf']
+    syllabifier_conf = LANGUAGES[language].get('syllabifier_conf', None)
     if syllabifier_conf is None:
         return None
     if len(phonemes) == 1 and phonemes[0] not in nonsilence_phonemes:

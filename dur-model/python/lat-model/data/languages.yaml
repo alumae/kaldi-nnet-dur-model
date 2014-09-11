@@ -1,0 +1,50 @@
+ENGLISH:
+    syllabifier_conf:
+        consonants: ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH']
+        vowels: [ 'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW']
+        onsets: ['P', 'T', 'K', 'B', 'D', 'G', 'F', 'V', 'TH', 'DH', 'S', 'Z', 'SH', 'CH', 'JH', 'M',
+        N', 'R', 'L', 'HH', 'W', 'Y', 'P R', 'T R', 'K R', 'B R', 'D R', 'G R', 'F R',
+        TH R', 'SH R', 'P L', 'K L', 'B L', 'G L', 'F L', 'S L', 'T W', 'K W', 'D W',
+        S W', 'S P', 'S T', 'S K', 'S F', 'S M', 'S N', 'G W', 'SH W', 'S P R', 'S P L',
+        S T R', 'S K R', 'S K W', 'S K L', 'TH W', 'ZH', 'P Y', 'K Y', 'B Y', 'F Y',
+        HH Y', 'V Y', 'TH Y', 'M Y', 'S P Y', 'S K Y', 'G Y', 'HH W', '']
+
+    phoneme_classes:
+        consonant: ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V',
+                      'W', 'Y', 'Z', 'ZH']
+        vowel: ['AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW']
+        stop: ['P', 'PD', 'B', 'T', 'D', 'K', 'G', 'CH', 'JH']
+        nasal: ['M', 'N', 'NG']
+        fricative: ['S', 'SH', 'Z', 'F', 'V', 'TH', 'DH', 'ZH', 'HH']
+        semivowel: ['L', 'R', 'ER', 'W', 'Y']
+
+ESTONIAN:
+    syllabifier_conf:
+        consonants : ['f', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'v', 'ff', 'hh', 'jj', 'kk', 'll', 'mm', 'nn', 'pp', 'rr', 'ss', 'shsh', 'tt', 'vv']
+        vowels : ['a', 'e', 'i', 'o', 'u', 'ou', 'ae', 'oe', 'ue', 'aa', 'ee', 'ii', 'oo', 'uu', 'ouou', 'aeae', 'oeoe', 'ueue']
+        onsets : ['f', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'v', 'ff', 'hh', 'jj', 'kk', 'll', 'mm', 'nn', 'pp', 'rr', 'ss', 'shsh', 'tt', 'vv']
+
+    phoneme_classes:
+        Labiodental: ['f', 'v', 'ff', 'vv']
+        Liquid: ['l', 'r', 'll', 'rr']
+        Stop: ['p', 'k', 't', 'pp', 'kk', 'tt']
+        Nasal: ['m', 'n', 'mm', 'nn']
+        Fricative: ['f', 'v', 's', 'sh', 'h', 'ff', 'vv', 'ss', 'shsh', 'hh']
+        Long: ['aeae', 'rr', 'aa', 'ee', 'ff', 'ii', 'hh', 'oeoe', 'jj', 'mm', 'll', 'oo', 'nn', 'pp', 'ss', 'shsh', 'u', 'tt', 'vv', 'ueue', 'ouo', 'kk']
+        Sibil: ['sh', 's', 'shsh', 'ss']
+        Vowel: ['a', 'e', 'i', 'o', '', 'o', 'ae', 'oe', 'ue', 'aa', 'ee', 'ii', 'oo', 'u', 'ouo', 'aeae', 'oeoe', 'ueue']
+        Consonant: ['f', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'sh', 't', 'v', 'ff', 'hh', 'jj', 'kk', 'll', 'mm', 'nn', 'pp', 'rr', 'ss', 'shsh', 'tt', 'vv']
+
+FINNISH:
+    # We use morphs for Finnish and syllabifying them doesn't really make sense,
+    # If we just leave it undefined, the model will not syllabify the words
+    phoneme_classes:
+        Labiodental: ['f', 'v', 'ff', 'vv']
+        Liquid: ['l', 'r', 'll', 'rr']
+        Nasal: ['m', 'n', 'mm', 'nn']
+        Stop1: ['b', 'g', 'd', 'bb', 'gg', 'dd']
+        Fricative: ['f', 'v', 's', 'h', 'ff', 'vv', 'ss', 'hh']
+        Long: ['vv', 'dd', 'aa', 'bb', 'ee', 'ää', 'gg', 'ff', 'ii', 'hh', 'kk', 'jj', 'mm', 'll', 'oo', 'nn', 'qq', 'pp', 'ss', 'rr', 'u', 'tt', 'öö', 'üü']
+        Stop2: ['p', 'k', 't', 'q', 'pp', 'kk', 'tt', 'qq']
+        Vowel: ['a', 'e', 'i', 'o', '', 'ä', 'ö', 'ü', 'aa', 'ee', 'ii', 'oo', 'u', 'ää', 'öö', 'üü']
+        Consonant: ['f', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'q', 'b', 'd', 'g', 'ff', 'hh', 'jj', 'kk', 'll', 'mm', 'nn', 'pp', 'rr', 'ss', 'tt', 'vv', 'qq', 'bb', 'dd', 'gg']
