@@ -15,6 +15,18 @@ DEPENDENCIES
   * Theano
   * Pylearn2
   
+Theano can be installed using python's `pip` utility:
+
+pip install Theano --user
+
+This installs Theano locally (not systemwide). More instructions: 
+http://deeplearning.net/software/theano/install.html
+
+Pylearn2 should be cloned from Github, see 
+http://deeplearning.net/software/pylearn2/#download-and-installation
+  
+  
+  
 USAGE
 =====
 
