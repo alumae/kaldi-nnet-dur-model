@@ -14,6 +14,11 @@ import codecs
 import lattice
 import durmodel_utils
 
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--read-features', action="store", dest="read_features_filename",
@@ -30,6 +35,8 @@ if __name__ == '__main__':
     parser.add_argument('--left-context', action='store', dest='left_context', help="Left context length", default=2, type=int)
     parser.add_argument('--right-context', action='store', dest='right_context', help="Left context length", default=2, type=int)
     parser.add_argument('--skip-fillers', action='store_true', dest='skip_fillers', help="Don't calculate posterior probabilities for fillers", default=True)
+    parser.add_argument('--utt2spk', action='store', dest='utt2spk', help="Use the mapping in the given file to add speaker ID to each sample")
+    parser.add_argument('--speakers', action='store', dest='speakers', help="List of speakers in training data, in sorted order")
 
     parser.add_argument('transitions', metavar='transitions.txt', help='Transition model, produced with show-transitions')
     parser.add_argument('nonsilence', metavar='nonsilence.txt', help='Nonsilence phonemes')
@@ -67,14 +74,40 @@ if __name__ == '__main__':
         for (i, feature) in enumerate(codecs.open(args.read_features_filename, encoding="UTF-8")):
             feature_dict[feature.strip()] = i
 
-    model = cPickle.load(open(args.model))
-    sym_context_matrix = theano.tensor.matrix(dtype=theano.config.floatX)
-    model_fprop_function = theano.function([sym_context_matrix], model.fprop(sym_context_matrix))
+    speaker_ids = None
+    if args.speakers:
+        print >> sys.stderr, ".. Reading speakers from %s" % args.speakers
+        speaker_ids = {}
+        for l in open(args.speakers):
+            ss = l.split()
+            speaker_ids.setdefault(ss[0], len(speaker_ids))
 
-    sym_y = theano.tensor.vector(dtype=theano.config.floatX)
-    sym_mean = theano.tensor.vector()
-    sym_sigma = theano.tensor.vector()
-    model_logprob_function = theano.function([sym_y, sym_mean, sym_sigma], model.layers[-1].logprob(sym_y, sym_mean, sym_sigma))
+    utt2spkid = None
+    if args.utt2spk:
+        assert speaker_ids is not None
+        print >> sys.stderr, "Reading utterance->speaker mapping from %s" % args.utt2spk
+        utt2spkid = {}
+        for l in open(args.utt2spk):
+            ss = l.split()
+            utt2spkid[ss[0]] = speaker_ids[ss[1]]
+
+
+    model = cPickle.load(open(args.model))
+
+    use_speaker_id=True
+    sym_input = model.get_input_space().make_theano_batch()
+    sym_Y = model.fprop(sym_input)
+    try:
+        model_fprop_function = theano.function(sym_input, sym_Y, on_unused_input='warn')
+    except:
+        use_speaker_id=False
+        sym_input = theano.tensor.matrix(dtype=theano.config.floatX)
+        model_fprop_function = theano.function([sym_input], model.fprop(sym_input))
+
+
+    sym_y = theano.tensor.matrix(dtype=theano.config.floatX)
+    sym_pdf_params = theano.tensor.matrix(dtype=theano.config.floatX)
+    model_logprob_function = theano.function([sym_y, sym_pdf_params], model.layers[-1].logprob(sym_y, sym_pdf_params))
 
     lattice_lines = []
     for l in sys.stdin:
@@ -104,7 +137,12 @@ if __name__ == '__main__':
                 #print >> sys.stderr, lat.arcs[i].start_frame, lat.arcs[i].end_frame, word_list[lat.arcs[i].word_id].encode('utf-8')
 
                 context_matrix = np.zeros((num_phones, len(feature_dict)), dtype=theano.config.floatX)
-                y = np.zeros(num_phones, dtype=theano.config.floatX)
+                if utt2spkid:
+                    speaker_vector = np.ones((num_phones, 1), dtype=np.int) * utt2spkid[lat.name]
+                else:
+                    speaker_vector = np.zeros((num_phones, 1), dtype=np.int)
+
+                y = np.zeros((num_phones, 1), dtype=theano.config.floatX)
                 for (j, (phone_features, dur)) in enumerate(full_word_features):
                     #print >> sys.stderr, "  phone %d" % (j)
                     for (feature_name, value) in phone_features:
@@ -117,9 +155,17 @@ if __name__ == '__main__':
                     #print  y
                 #print context_matrix
 
-                mu_and_sigma = model_fprop_function(context_matrix)
-                mean = mu_and_sigma[:, 0]
-                sigma = np.exp(mu_and_sigma[:, 1])
+                if use_speaker_id:
+                    dist_params = model_fprop_function(context_matrix, speaker_vector)
+                else:
+                    dist_params = model_fprop_function(context_matrix)
+
+                #mean = dist_params[:, 0]
+                #sigma = np.exp(dist_params[:, 1])
+
+                #n = np.exp(dist_params[:, 0]) # n > 0
+                #p = sigmoid(dist_params[:, 1]) # p in (0,1)
+
 
                 #prob_vector = np.exp(
                 #    -(np.log(y[:, 0]) - log_mu_and_sigma[:, 0]) ** 2 / ( 2 * np.exp(log_mu_and_sigma[:, 1]) ** 2)) / \
@@ -128,7 +174,7 @@ if __name__ == '__main__':
                 #log_prob_vector = \
                 #    (0.5 * (np.log(2 * np.pi * sigma_square) + 0.5 * ((y_target - mean) ** 2) / sigma_square)).sum(axis=1)
 
-                log_prob_vector = model_logprob_function(y, mean, sigma)
+                log_prob_vector = model_logprob_function(y, dist_params)
 
                 #print >> sys.stderr,prob_vector
                 if not args.output_extended_lat:

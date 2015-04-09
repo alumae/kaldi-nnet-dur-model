@@ -136,7 +136,7 @@ def make_local(start_frame, word_id, frames, transitions, word_list, nonsilence_
     return features_and_dur_seq
 
 
-def make_linear(feature_and_dur_seqs, nonsilence_phonemes):
+def make_linear(feature_and_dur_seqs, nonsilence_phonemes, speaker_id):
     full_feature_seq = []
     local_feature_seq = []
     for feature_and_dur_seq in feature_and_dur_seqs:
@@ -176,7 +176,7 @@ def make_linear(feature_and_dur_seqs, nonsilence_phonemes):
                 else:
                     full_feature_list.append(("pos+%d:</s>" % j, 1))
 
-            full_feature_seq.append((full_feature_list, dur))
+            full_feature_seq.append((full_feature_list, speaker_id, dur))
             i += 1
 
     return full_feature_seq

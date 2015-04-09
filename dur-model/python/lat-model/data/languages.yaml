@@ -1,22 +1,22 @@
 ENGLISH:
-    syllabifier_conf:
-        consonants: ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH']
-        vowels: [ 'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW']
-        onsets: ['P', 'T', 'K', 'B', 'D', 'G', 'F', 'V', 'TH', 'DH', 'S', 'Z', 'SH', 'CH', 'JH', 'M',
-        'N', 'R', 'L', 'HH', 'W', 'Y', 'P R', 'T R', 'K R', 'B R', 'D R', 'G R', 'F R',
-        'TH R', 'SH R', 'P L', 'K L', 'B L', 'G L', 'F L', 'S L', 'T W', 'K W', 'D W',
-        'S W', 'S P', 'S T', 'S K', 'S F', 'S M', 'S N', 'G W', 'SH W', 'S P R', 'S P L',
-        'S T R', 'S K R', 'S K W', 'S K L', 'TH W', 'ZH', 'P Y', 'K Y', 'B Y', 'F Y',
-        'HH Y', 'V Y', 'TH Y', 'M Y', 'S P Y', 'S K Y', 'G Y', 'HH W', '']
+    #syllabifier_conf:
+    #    consonants: ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH']
+    #    vowels: [ 'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW']
+    #    onsets: ['P', 'T', 'K', 'B', 'D', 'G', 'F', 'V', 'TH', 'DH', 'S', 'Z', 'SH', 'CH', 'JH', 'M',
+    #    'N', 'R', 'L', 'HH', 'W', 'Y', 'P R', 'T R', 'K R', 'B R', 'D R', 'G R', 'F R',
+    #    'TH R', 'SH R', 'P L', 'K L', 'B L', 'G L', 'F L', 'S L', 'T W', 'K W', 'D W',
+    #    'S W', 'S P', 'S T', 'S K', 'S F', 'S M', 'S N', 'G W', 'SH W', 'S P R', 'S P L',
+    #    'S T R', 'S K R', 'S K W', 'S K L', 'TH W', 'ZH', 'P Y', 'K Y', 'B Y', 'F Y',
+    #    'HH Y', 'V Y', 'TH Y', 'M Y', 'S P Y', 'S K Y', 'G Y', 'HH W', '']
 
     phoneme_classes:
-        consonant: ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V',
-                      'W', 'Y', 'Z', 'ZH']
-        vowel: ['AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW']
+        vowel: ['IY', 'IH', 'EH', 'AE', 'AA', 'AH', 'AO', 'UH', 'UW', 'UX', 'AX', 'IX']
         stop: ['P', 'PD', 'B', 'T', 'D', 'K', 'G', 'CH', 'JH']
         nasal: ['M', 'N', 'NG']
         fricative: ['S', 'SH', 'Z', 'F', 'V', 'TH', 'DH', 'ZH', 'HH']
         semivowel: ['L', 'R', 'ER', 'W', 'Y']
+        diphthongs: ['EY', 'AW', 'AY', 'OY', 'OW']
+
 
 ESTONIAN:
     syllabifier_conf:
@@ -48,3 +48,17 @@ FINNISH:
         Stop2: ['p', 'k', 't', 'q', 'pp', 'kk', 'tt', 'qq']
         Vowel: ['a', 'e', 'i', 'o', '', 'ä', 'ö', 'ü', 'aa', 'ee', 'ii', 'oo', 'u', 'ää', 'öö', 'üü']
         Consonant: ['f', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'q', 'b', 'd', 'g', 'ff', 'hh', 'jj', 'kk', 'll', 'mm', 'nn', 'pp', 'rr', 'ss', 'tt', 'vv', 'qq', 'bb', 'dd', 'gg']
+
+SWAHILI:
+    #It seems that it's better to not use syllable info for Swahili, and I'm not sure how to define it correctly for Swahili anyway
+    phoneme_classes:
+        Vowel: ['a',  'e',  'i',  'o',  'u',  'y']
+        Nasal: ['m', 'n', 'NN', 'YY']
+        PreNesalStop: ['BB', 'DD', 'JJ', 'GG']
+        ImplosiveStop: ['b', 'd', 'j', 'g']
+        TenuisStop: ['p', 't', 'CC', 'k']
+        PreNasalFricative: ['VV', 'ZZ']
+        VoicedFricative: ['v', 'LL', 'z', 'RR']
+        VoicelessFricative: ['f', 'TT', 's', 'SS', 'XX', 'h']
+        Approximant: ['l', 'y', 'w']
+

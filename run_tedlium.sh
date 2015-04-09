@@ -28,52 +28,121 @@ pylearn_dir=~/tools/pylearn2
 # Aggregating traing data for duration model needs more RAM than default in our SLURM
 aggregate_data_args="--mem=8g"
 
+left_context=4
+right_context=2
+
+h0_dim=400
+h1_dim=400
+speaker_projection_dim=100
 
 . utils/parse_options.sh || exit 1;
 
 if [ $stage -le 0 ]; then
-  # Align training data using a model in exp/tri3_mmi_b0.1
-  steps/align_fmllr.sh --nj $nj --cmd "$train_cmd" \
-      data/train data/lang exp/tri3_mmi_b0.1 exp/tri3_mmi_b0.1_ali || exit 1
+  # Align training data using a model in exp/nnet2_online/nnet_ms_sp_ali
+  steps/nnet2/align.sh --nj $nj --cmd "$train_cmd" --use-gpu no  \
+      --transform-dir "$transform_dir" --online-ivector-dir exp/nnet2_online/ivectors_train_hires \
+      data/train_hires data/lang exp/nnet2_online/nnet_ms_sp exp/nnet2_online/nnet_ms_sp_ali || exit 1
 fi
+
+
 
 if [ $stage -le 1 ]; then
-  # Train a duration model based on alignments in exp/tri3_mmi_b0.1_ali
-  ./dur-model/train_dur_model.sh --nj $nj --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --pylearn-dir $pylearn_dir --aggregate-data-args "$aggregate_data_args" \
+  # Train a duration model based on alignments in exp/nnet2_online/nnet_ms_sp_ali
+  ./dur-model/train_dur_model.sh --nj $nj --cmd "$train_cmd" --cuda-cmd "$cuda_cmd --mem 8g" --pylearn-dir $pylearn_dir --aggregate-data-args "$aggregate_data_args" \
     --stage 0 \
+    --left-context $left_context --right-context $right_context \
     --language ENGLISH \
     --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
-    data/train data/lang exp/tri3_mmi_b0.1_ali exp/dur_model_tri3_mmi_b0.1 || exit 1
+    --h0-dim $h0_dim --h1-dim $h1_dim \
+    data/train_hires data/lang exp/nnet2_online/nnet_ms_sp_ali exp/dur_model_nnet_ms_sp || exit 1
 fi
 
-# Decode dev data, try different duration model scales and phone insertion penalties.
+
+
 if [ $stage -le 2 ]; then
-  # Rescore dev lattices using the duration model
-  ./dur-model/decode_dur_model.sh --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --nj $decode_nj \
-    --language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
-    --scales "0.2 0.3" --penalties "0.15 0.18 0.20" \
-    --stage 0 \
-    data/lang \
-    exp/tri3/graph \
-    data/dev \
-    exp/tri3_mmi_b0.1/decode_dev_it4 \
-    exp/dur_model_tri3_mmi_b0.1 \
-    exp/dur_model_tri3_mmi_b0.1/decode_dev_it4 || exit 1
+	# Decode dev/test data, try different duration model scales and phone insertion penalties.
+	for decode_set in  dev test; do
+	  num_jobs=`cat data/${decode_set}_hires/utt2spk|cut -d' ' -f2|sort -u|wc -l`
+	  # Rescore dev lattices using the duration model
+	  ./dur-model/decode_dur_model.sh --cmd "$train_cmd" --cuda-cmd "$cuda_cmd --mem 8g" --nj $num_jobs \
+		--language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
+		--scales "0.2 0.3 0.4" --penalties "0.11 0.13 0.15 0.17 0.19 0.21" \
+		--stage 0 \
+		--left-context $left_context --right-context $right_context \
+		--ignore_speakers true \
+		data/lang \
+		exp/tri3/graph \
+		data/${decode_set}_hires \
+		exp/nnet2_online/nnet_ms_sp_online/decode_${decode_set}_utt_offline \
+		exp/dur_model_nnet_ms_sp \
+		exp/dur_model_nnet_ms_sp/decode_${decode_set}_utt_offline || exit 1;
+	done
 fi
 
-if [ $stage -le 3 ]; then
-  # Rescore test lattices using the duration model
-  ./dur-model/decode_dur_model.sh --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --nj $decode_nj \
-    --language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
-    --scales "0.2 0.3" --penalties "0.15 0.18 0.20" \
+exit
+
+if [ $stage -le 4 ]; then
+  # Train a duration model based on alignments in exp/tri3_mmi_b0.1_ali
+  ./dur-model/train_sat_dur_model.sh --nj $nj --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --pylearn-dir $pylearn_dir --aggregate-data-args "$aggregate_data_args" \
     --stage 0 \
-    data/lang \
-    exp/tri3/graph \
-    data/test \
-    exp/tri3_mmi_b0.1/decode_test_it4 \
-    exp/dur_model_tri3_mmi_b0.1 \
-    exp/dur_model_tri3_mmi_b0.1/decode_test_it4 || exit 1
+    --left-context $left_context --right-context $right_context \
+    --language ENGLISH \
+    --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
+    --h0-dim $h0_dim --h1-dim $h1_dim --speaker-projection-dim $speaker_projection_dim \
+    data/train data/lang exp/tri3_mmi_b0.1_ali exp/dur_model_sat_tri3_mmi_b0.1 || exit 1
 fi
+
+
+if [ $stage -le 5 ]; then
+  for set in dev test; do 
+    ## Create a new data directory from hypotheses
+    #echo "Creating fake data directory for $set data from baseline hypotheses"
+    #rm -rf exp/tri3_mmi_b0.1/decode_${set}_it4/data
+    #mkdir -p exp/tri3_mmi_b0.1/decode_${set}_it4/data    
+    #cp -r data/${set}/* exp/tri3_mmi_b0.1/decode_${set}_it4/data
+    #rm -rf exp/tri3_mmi_b0.1/decode_${set}_it4/data/split*
+    ## FIXME: we take the hyps of LM weight 12 -- should take the best one based on dev set performance
+    #cat exp/tri3_mmi_b0.1/decode_${set}_it4/scoring/12.tra | int2sym.pl -f 2- data/lang/words.txt > exp/tri3_mmi_b0.1/decode_${set}_it4/data/text
+  
+    # Align training data using a model in exp/tri3_mmi_b0.1
+    echo "Aligning $set data"
+    steps/align_fmllr.sh --nj $decode_nj --cmd "$train_cmd" \
+        data/${set} data/lang exp/tri3_mmi_b0.1 exp/tri3_mmi_b0.1_${set}_ali || exit 1
+  done
+fi
+
+
+
+if [ $stage -le 6 ]; then
+  for set in dev test; do 
+    echo "Adapting SAT duration model to $set speakers"
+    ./dur-model/adapt_dur_model_sat.sh --nj $decode_nj --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --pylearn-dir $pylearn_dir --aggregate-data-args "$aggregate_data_args" \
+      --stage 0 \
+      --language ENGLISH \
+      --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
+      --h0-dim $h0_dim --h1-dim $h1_dim --speaker-projection-dim $speaker_projection_dim \      
+      data/$set data/lang exp/tri3_mmi_b0.1_${set}_ali \
+      exp/dur_model_sat_tri3_mmi_b0.1 exp/dur_model_sat_tri3_mmi_b0.1_${set} || exit 1
+  done
+fi
+
+if [ $stage -le 7 ]; then
+  for set in dev test; do 
+    echo "Decoding using SAT duration model adapted to $set speakers"
+    # Rescore lattices using the adapted SAT duration model
+    ./dur-model/decode_dur_model.sh --cmd "$train_cmd" --cuda-cmd "$cuda_cmd" --nj $decode_nj \
+      --language ENGLISH --fillers "!SIL,[BREATH],[NOISE],[COUGH],[SMACK],[UM],[UH]" --stress-dict dur-model/python/lat-model/data/en/cmudict.0.7a.lc \
+      --scales "0.2 0.3 0.4" --penalties "0.15 0.18 0.20 0.22" \
+      --stage 0 \
+      data/lang \
+      exp/tri3/graph \
+      data/${set} \
+      exp/tri3_mmi_b0.1/decode_${set}_it4 \
+      exp/dur_model_sat_tri3_mmi_b0.1_${set} \
+      exp/dur_model_sat_tri3_mmi_b0.1_${set}/decode_${set}_it4 || exit 1
+    done
+fi
+
 
 
 #=== RESULTS ===

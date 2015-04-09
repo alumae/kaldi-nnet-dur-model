@@ -9,6 +9,8 @@ import gzip
 
 from pylearn2.datasets import dense_design_matrix
 from pylearn2.utils import serial
+from pylearn2.datasets import vector_spaces_dataset
+from pylearn2.space import CompositeSpace, VectorSpace, IndexSpace
 
 from durmodel_utils import read_transitions
 import lattice
@@ -27,6 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--left-context', action='store', dest='left_context', help="Left context length", default=2, type=int)
     parser.add_argument('--right-context', action='store', dest='right_context', help="Left context length", default=2, type=int)
     parser.add_argument('--no-duration-feature', action='store_true', dest='no_use_duration', help="Don't Use duration features")
+    parser.add_argument('--utt2spk', action='store', dest='utt2spk', help="Use the mapping in the given file to add speaker ID to each sample")
 
     parser.add_argument('transitions', metavar='transitions.txt', help='Transition model, produced with show-transitions')
     parser.add_argument('nonsilence', metavar='nonsilence.txt', help='Nonsilence phonemes')
@@ -57,6 +60,14 @@ if __name__ == '__main__':
         print >> sys.stderr, "Reading stress dictionary"
         stress_dict = durmodel_utils.load_stress_dict(args.stress_dict_filename)
 
+    utt2spkid = None
+    speaker_ids = {}
+    if args.utt2spk:
+        print >> sys.stderr, "Reading utterance->speaker mapping from %s" % args.utt2spk
+        utt2spkid = {}
+        for l in open(args.utt2spk):
+            ss = l.split()
+            utt2spkid[ss[0]] = speaker_ids.setdefault(ss[1], len(speaker_ids))
 
     num_sentences_read = 0
     full_features_and_durs = []
@@ -76,9 +87,12 @@ if __name__ == '__main__':
                                                                language=args.language, stress_dict=stress_dict)
                     #print features_and_dur_seq
                     features_and_durs.append(features_and_dur_seq)
-                full_features_and_durs.extend(durmodel_utils.make_linear(features_and_durs, nonsilence_phonemes))
+                full_features_and_durs.extend(durmodel_utils.make_linear(features_and_durs, nonsilence_phonemes, utt2spkid[lat.name] if utt2spkid else 0))
             except IOError as e:
                 print >> sys.stderr, "I/O error({0}): {1} -- {2} when processing lattice {3}".format(e.errno, e.strerror, e.message,  lat.name)
+            except ValueError as e:
+                print >> sys.stderr, "ValueError({0}): {1} -- {2} when processing lattice {3}".format(0, "", e.message,  lat.name)
+
             num_sentences_read += 1
             sentence_lines = []
     print >> sys.stderr, "Read alignments for %d utterances" % num_sentences_read
@@ -91,7 +105,7 @@ if __name__ == '__main__':
             feature_dict[feature.strip()] = i
 
     else:
-        for (_features, d) in full_features_and_durs:
+        for (_features, _speaker_id, d) in full_features_and_durs:
             for f in _features:
                 feature_name = f[0]
                 feature_dict.setdefault(feature_name, len(feature_dict))
@@ -107,20 +121,31 @@ if __name__ == '__main__':
     context_matrix = np.zeros((num_items, len(feature_dict)), dtype=np.float16)
     print ".. Created matrix of shape ", context_matrix.shape, " and size ", context_matrix.size
 
-    y = np.zeros((num_items, 2), dtype=np.float)
+    speaker_vector = np.zeros((num_items, 1), dtype=np.int)
+    print ".. Created matrix of shape ", context_matrix.shape, " and size ", context_matrix.size
+
+
+    y = np.zeros((num_items, 1), dtype=np.float)
     print ".. Created outcome matrix of shape", y.shape, " and size ", y.size
-    for (i, (_features, dur)) in enumerate(full_features_and_durs):
+    for (i, (_features, _speaker_id, dur)) in enumerate(full_features_and_durs):
         for feature in _features:
             (feature_name, value) = feature
             feature_id = feature_dict.get(feature_name, -1)
             if feature_id >= 0:
                 context_matrix[i, feature_id] = value
-
-        y[i, 0] = dur
+        speaker_vector[i, 0] = _speaker_id
+        y[i] = dur
 
     #print context_matrix
 
-    ds = dense_design_matrix.DenseDesignMatrix(X=context_matrix, y=y)
+    #ds = dense_design_matrix.DenseDesignMatrix(X=context_matrix, y=y)
+    space = CompositeSpace([VectorSpace(dim=len(feature_dict)),
+                            IndexSpace(dim=1, max_labels=len(speaker_ids)),
+                            VectorSpace(dim=1)])
+    source = ('features', 'speakers', 'targets')
+    dataset = vector_spaces_dataset.VectorSpacesDataset(
+        data=(context_matrix, speaker_vector, y),
+        data_specs=(space, source))
 
     if args.save_filename:
-        serial.save(args.save_filename, ds)
+        serial.save(args.save_filename, dataset)

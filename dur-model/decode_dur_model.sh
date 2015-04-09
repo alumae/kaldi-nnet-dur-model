@@ -12,7 +12,13 @@ pylearn_dir=~/tools/pylearn2
 scales="0.3 0.4 0.5"
 penalties="0.1 0.15 0.20"
 
+left_context=3
+right_context=3
+
+
 fillers="\<sil\>"
+ignore_speakers=false
+per_utt=false
 
 score_cmd=./local/score.sh
 stage=0
@@ -73,17 +79,29 @@ fi
 if [ $stage -le 1 ]; then
   echo "$0: Add duration model scores to decoding lattices, resulting in 'extended lattices'"
   mkdir -p $decode_dir/log
+  if ! $per_utt; then
+    speaker_args="--utt2spk $data/utt2spk --speakers $dur_model_dir/speakers.txt"
+  else
+    speaker_args="--utt2spk $dur_model_dir/utt2spk --speakers $dur_model_dir/speakers.txt"
+  fi
+  
+
+  if "$ignore_speakers"; then
+    speaker_args=""
+  fi
+  
   $cuda_cmd JOB=1:$nj $decode_dir/log/process_lattice.JOB.log \
     set -o pipefail \; \
     zcat $decode_dir/ali_lat.JOB.gz \| \
     PYTHONPATH=dur-model/python/pylearn2/ \
       ./dur-model/python/lat-model/process_lattice.py \
-        --left-context 3 \
-        --right-context 3 \
+        --left-context $left_context \
+        --right-context $right_context \
         --read-features $dur_model_dir/ali-lat.features \
         --output-extended-lat true \
         --language $language \
         --fillers "$fillers" \
+        $speaker_args \
         $stress_arg \
         $dur_model_dir/transitions.txt $langdir/phones/nonsilence.txt $graphdir/words.txt \
         $dur_model_dir/durmodel_best.pkl \| \

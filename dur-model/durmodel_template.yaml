@@ -3,27 +3,29 @@
   
   model : !obj:pylearn2.models.mlp.MLP {
     layers: [
-      !obj:pylearn2.models.mlp.RectifiedLinear {
-                     layer_name: 'h0',
-                     dim: ${H0_DIM},
-                     sparse_init: 15,
-                     #irange: .02,
-                     max_col_norm: 5.0,
-      },
-
+            !obj:pylearn2.models.maxout.Maxout {
+                        layer_name: 'h0',
+                        num_units: ${H0_DIM},
+                        num_pieces: 5,
+                        irange: .05,
+                        # Rather than using weight decay, we constrain the norms of the weight vectors
+                        max_col_norm: 5.
+             },                  
+        
+        
+        
       !obj:pylearn2.models.maxout.Maxout {
                   layer_name: 'h1',
                   num_units: ${H1_DIM},
                   num_pieces: 5,
-                  irange: .005,
+                  irange: .05,
                   # Rather than using weight decay, we constrain the norms of the weight vectors
                   max_col_norm: 2.
-              },      
-
- 
+       },      
 
 
-      !obj:loglinear_cost.LogNormalLogLikelihood {
+      !obj:durmodel_elements.LogNormalMixtureLogLikelihood {
+        num_mixtures : 4,
         layer_name: 'out',
         irange: 0.,
         #W_lr_scale: 2.0,
@@ -32,7 +34,21 @@
       }
 
     ],
+    
     nvis: ${INPUT_DIM},
+    
+    #input_space: !obj:pylearn2.space.CompositeSpace {
+      #components: [
+        #!obj:pylearn2.space.VectorSpace {
+          #dim: ${INPUT_DIM}, 
+        #},
+        #!obj:pylearn2.space.IndexSpace {
+          #dim: 1, 
+          #max_labels: ${NUM_SPEAKERS}
+        #}
+      #]
+    #},
+    #input_source: ['features', 'speakers']
   },
   
 
@@ -47,9 +63,11 @@
              init_momentum: 0.5
     },
     
+    
+    
     #cost: !obj:pylearn2.costs.mlp.dropout.Dropout {
-    #         input_include_probs: { 'h0' : 1.0 },
-    #         input_scales: { 'h0' :  1.0 }
+             #input_include_probs: { 'h0' : 1.0 },
+             #input_scales: { 'h0': 1.0 }
     #},    
 
     # Each gradient step will be based on this many examples
@@ -77,9 +95,9 @@
     #    N : 1,
     #}
     termination_criterion : !obj:pylearn2.termination_criteria.MonitorBased {
-        channel_name: "valid_objective",
+        channel_name: "valid_out_ppl",
         prop_decrease: 0.,
-        N: 10
+        N: 5
     },
     #update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
     #    decay_factor: 1.00001,
@@ -95,9 +113,10 @@
         #decay_factor: 0.5
     #},
     !obj:pylearn2.train_extensions.best_params.MonitorBasedSaveBest {
-       channel_name: "valid_objective",
+       channel_name: "valid_out_ppl",
        save_path: "${MODEL_SAVE_PATH}"
     },
+
   ],
   
 }
