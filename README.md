@@ -24,7 +24,7 @@ DEPENDENCIES
   
 Theano can be installed using python's `pip` utility:
 
-pip install Theano --user
+    pip install Theano --user
 
 This installs Theano locally (not systemwide). More instructions: 
 http://deeplearning.net/software/theano/install.html
@@ -44,15 +44,15 @@ can use GPU which makes the training much faster (takes about 1 hour on
 TEDLIUM data, when using a Tesla K20). You should use the ~/.theanorc 
 file to instruct Theano to use the GPU:
 
-[global]
-device = gpu 
-floatX = float32
+    [global]
+    device = gpu 
+    floatX = float32
 
 If you use a cluster, you should also instruct Theano to use a 
 machine-local temporary directory for its compilation directory. Set the
 following line in the [global] section of the .theanorc file:
 
-base_compiledir=/tmp/%(user)s/theano.NOBACKUP
+    base_compiledir=/tmp/%(user)s/theano.NOBACKUP
 
 
 ADDING A NEW LANGUAGE
