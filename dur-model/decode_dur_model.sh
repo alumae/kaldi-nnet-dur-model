@@ -17,7 +17,7 @@ right_context=3
 
 
 fillers="\<sil\>"
-ignore_speakers=false
+ignore_speakers=true
 per_utt=false
 
 score_cmd=./local/score.sh
@@ -113,7 +113,7 @@ if [ $stage -le 2 ]; then
   for scale in $scales; do
     for penalty in $penalties; do
       echo "$0: Using scale $scale and phone penalty $penalty to rescore the lattices"
-      extended_decode_dir=${decode_dir}_s${scale}_p${penalty};
+      extended_decode_dir=${decode_dir}/s${scale}_p${penalty};
       mkdir -p $extended_decode_dir;      
       cp ${src_decode_dir}/../final.mdl ${extended_decode_dir}/../final.mdl
       cp ${src_decode_dir}/num_jobs ${extended_decode_dir}/num_jobs

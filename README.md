@@ -1,12 +1,21 @@
 INTRODUCTION
 ============
 
-Implementation of a neural network phone duration model, as described in
+Kaldi implementation of a neural network phone duration model, as described in
 the paper:
 
 Tanel Alumäe. Neural network phone duration model for speech recognition. 
 Interspeech 2014, Singapore.
 https://phon.ioc.ee/dokuwiki/lib/exe/fetch.php?media=people:tanel:icassp2014-durmodel.pdf
+
+The neural model has been tested on English, Estonian and Finnish.
+
+We provide a [recipe for the TEDLIUM dataset](run_tedlium.sh). The baseline system uses online 
+multisplice speed-perturbed DNN models and rescores the lattices with  
+large language model from Cantab Research. Duration model decreases 
+WER from 12.7% to 12.1% for the development
+set and from 11.7% to 11.0% for the test set.
+
 
 DEPENDENCIES
 ============
@@ -29,12 +38,8 @@ http://deeplearning.net/software/pylearn2/#download-and-installation
 USAGE
 =====
 
-See `run_tedlium.sh` for a sample script that trains a duration model
-on TEDLIUM data, on top of already trained MMI triphone models. The 
-improvement on TEDLIUM data is very small, however. Larger improvements
-can be expected for languages that have phonetic duration opposition,
-i.e., a phoneme can have either short or long duration, and the duration
-changes the meaning of a word (see http://en.wikipedia.org/wiki/Length_(phonetics))
+See [run_tedlium.sh](run_tedlium.sh) for a sample script that trains a duration model
+on TEDLIUM data, on top of already trained DNN models. 
 
 Duration model is trained using Pylearn2 that itself uses Theano. Theano
 can use GPU which makes the training much faster (takes about 1 hour on

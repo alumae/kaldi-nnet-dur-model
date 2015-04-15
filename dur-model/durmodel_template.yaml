@@ -25,7 +25,7 @@
 
 
       !obj:durmodel_elements.LogNormalMixtureLogLikelihood {
-        num_mixtures : 4,
+        num_mixtures : 2,
         layer_name: 'out',
         irange: 0.,
         #W_lr_scale: 2.0,

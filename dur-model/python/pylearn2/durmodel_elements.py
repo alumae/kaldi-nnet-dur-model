@@ -14,6 +14,15 @@ from pylearn2.utils import sharedX
 from pylearn2.space import Space, CompositeSpace
 from pylearn2.datasets.preprocessing import Preprocessor
 
+from pylearn2.utils.iteration import resolve_iterator_class
+from pylearn2.sandbox.rnn.space import SequenceDataSpace
+from pylearn2.space import IndexSpace, CompositeSpace
+from pylearn2.datasets.vector_spaces_dataset import VectorSpacesDataset
+from pylearn2.sandbox.rnn.utils.iteration import SequenceDatasetIterator
+from pylearn2.sandbox.rnn.models.mlp_hook import RNNWrapper
+from pylearn2.utils.rng import make_np_rng
+from pylearn2.linear.matrixmul import MatrixMul
+
 class CombinedLogLikelihood(Linear):
     def __init__(self, components, **kwargs):
         self.component_dists = [(s[0].strip(), int(s[2])) for s in [xx.partition(":") for xx in components]]
@@ -269,3 +278,249 @@ class ConnectionScaler(Layer):
   @wraps(Layer.get_weight_decay)
   def get_weight_decay(self, coeff):
     return 0
+
+
+class DurationSequencesDataset(VectorSpacesDataset):
+    def _create_subset_iterator(self, mode, batch_size=None, num_batches=None,
+                                rng=None):
+        subset_iterator = resolve_iterator_class(mode)
+        if rng is None and subset_iterator.stochastic:
+            rng = make_np_rng()
+        return subset_iterator(self.get_num_examples(), batch_size,
+                               num_batches, rng)
+
+    @wraps(VectorSpacesDataset.iterator)
+    def iterator(self, batch_size=None, num_batches=None, rng=None,
+                 data_specs=None, return_tuple=False, mode=None):
+        subset_iterator = self._create_subset_iterator(
+            mode=mode, batch_size=batch_size, num_batches=num_batches, rng=rng
+        )
+        # This should be fixed to allow iteration with default data_specs
+        # i.e. add a mask automatically maybe?
+        return SequenceDatasetIterator(self, data_specs, subset_iterator,
+                                       return_tuple=return_tuple)
+
+class WeightedLogNormalLogLikelihood(Layer):
+
+    __metaclass__ = RNNWrapper
+
+    def __init__(self, layer_name, irange=0.0, init_bias=0.):
+        super(WeightedLogNormalLogLikelihood, self).__init__()
+        self.__dict__.update(locals())
+        del self.self
+        self.dim = 2
+
+        self.b = sharedX(np.zeros((self.dim,)) + init_bias,
+                             name=(layer_name + '_b'))
+
+    @wraps(Layer.set_input_space)
+    def set_input_space(self, space):
+
+        self.input_space = space
+
+        if isinstance(space, VectorSpace):
+            self.requires_reformat = False
+            self.input_dim = space.dim
+        else:
+            self.requires_reformat = True
+            self.input_dim = space.get_total_dimension()
+            self.desired_space = VectorSpace(self.input_dim)
+
+        self.output_space = VectorSpace(self.dim)
+
+        rng = self.mlp.rng
+
+        W = rng.uniform(-self.irange,
+                        self.irange,
+                        (self.input_dim, self.dim))
+
+        W = sharedX(W)
+        W.name = self.layer_name + '_W'
+
+        self.transformer = MatrixMul(W)
+
+        W, = self.transformer.get_params()
+        assert W.name is not None
+
+
+    @wraps(Layer.get_params)
+    def get_params(self):
+
+        W, = self.transformer.get_params()
+        assert W.name is not None
+        rval = self.transformer.get_params()
+        assert not isinstance(rval, set)
+        rval = list(rval)
+        assert self.b.name is not None
+        assert self.b not in rval
+        rval.append(self.b)
+        return rval
+
+
+    @wraps(Layer.get_weights)
+    def get_weights(self):
+
+        if self.requires_reformat:
+            # This is not really an unimplemented case.
+            # We actually don't know how to format the weights
+            # in design space. We got the data in topo space
+            # and we don't have access to the dataset
+            raise NotImplementedError()
+        W, = self.transformer.get_params()
+
+        W = W.get_value()
+
+        return W
+
+    @wraps(Layer.set_weights)
+    def set_weights(self, weights):
+
+        W, = self.transformer.get_params()
+        W.set_value(weights)
+
+    @wraps(Layer.set_biases)
+    def set_biases(self, biases):
+
+        self.b.set_value(biases)
+
+    @wraps(Layer.get_biases)
+    def get_biases(self):
+        """
+        .. todo::
+            WRITEME
+        """
+        return self.b.get_value()
+
+    @wraps(Layer.get_weights_format)
+    def get_weights_format(self):
+
+        return ('v', 'h')
+
+    @wraps(Layer.get_weights_topo)
+    def get_weights_topo(self):
+
+        if not isinstance(self.input_space, Conv2DSpace):
+            raise NotImplementedError()
+
+        W, = self.transformer.get_params()
+
+        W = W.T
+
+        W = W.reshape((self.dim, self.input_space.shape[0],
+                       self.input_space.shape[1],
+                       self.input_space.num_channels))
+
+        W = Conv2DSpace.convert(W, self.input_space.axes, ('b', 0, 1, 'c'))
+
+        return function([], W)()
+
+    @wraps(Layer.get_layer_monitoring_channels)
+    def get_layer_monitoring_channels(self, state_below=None,
+                                      state=None, targets=None):
+        W, = self.transformer.get_params()
+
+        assert W.ndim == 2
+
+        sq_W = T.sqr(W)
+
+        row_norms = T.sqrt(sq_W.sum(axis=1))
+        col_norms = T.sqrt(sq_W.sum(axis=0))
+
+        rval = OrderedDict([('row_norms_min',  row_norms.min()),
+                            ('row_norms_mean', row_norms.mean()),
+                            ('row_norms_max',  row_norms.max()),
+                            ('col_norms_min',  col_norms.min()),
+                            ('col_norms_mean', col_norms.mean()),
+                            ('col_norms_max',  col_norms.max()), ])
+
+        if (state is not None) or (state_below is not None):
+            if state is None:
+                state = self.fprop(state_below)
+
+            mx = state.max(axis=0)
+            mean = state.mean(axis=0)
+            mn = state.min(axis=0)
+            rg = mx - mn
+
+            rval['range_x_max_u'] = rg.max()
+            rval['range_x_mean_u'] = rg.mean()
+            rval['range_x_min_u'] = rg.min()
+
+            rval['max_x_max_u'] = mx.max()
+            rval['max_x_mean_u'] = mx.mean()
+            rval['max_x_min_u'] = mx.min()
+
+            rval['mean_x_max_u'] = mean.max()
+            rval['mean_x_mean_u'] = mean.mean()
+            rval['mean_x_min_u'] = mean.min()
+
+            rval['min_x_max_u'] = mn.max()
+            rval['min_x_mean_u'] = mn.mean()
+            rval['min_x_min_u'] = mn.min()
+
+        if targets:
+            y_target = targets[:, 0]
+            cost_multiplier = targets[:, 1]
+            mean = state[:, 0]
+            sigma = T.exp(state[:, 1])
+            nll = self.logprob(y_target, mean, sigma)
+            prob_vector = T.exp(-nll)
+            rval['prob'] = (prob_vector * cost_multiplier).sum() / (1.0 * cost_multiplier.sum())
+            rval['ppl'] = T.exp((nll* cost_multiplier).sum() / (1.0 * cost_multiplier.sum()))
+        return rval
+
+    def _linear_part(self, state_below):
+        """
+        Parameters
+        ----------
+        state_below : member of input_space
+        Returns
+        -------
+        output : theano matrix
+            Affine transformation of state_below
+        """
+        self.input_space.validate(state_below)
+
+        if self.requires_reformat:
+            state_below = self.input_space.format_as(state_below,
+                                                     self.desired_space)
+
+        z = self.transformer.lmul(state_below)
+        z += self.b
+
+        if self.layer_name is not None:
+            z.name = self.layer_name + '_z'
+
+        return z
+
+    @wraps(Layer.fprop)
+    def fprop(self, state_below):
+        p = self._linear_part(state_below)
+        return p
+
+
+    def logprob(self, y_target, mean, sigma):
+        return (((T.log(y_target) - mean) ** 2 / (2 * sigma ** 2) + T.log(y_target * sigma * T.sqrt(2 * np.pi))))
+
+    @wraps(Layer.cost)
+    def cost(self, Y, Y_hat):
+        mean = Y_hat[:, 0] #+ 1.6091597151048114
+        sigma = T.exp(Y_hat[:, 1]) #+ 0.26165911509618789
+        y_target = Y[:, 0]
+        cost_multiplier = Y[:, 1]
+        return (self.logprob(y_target, mean, sigma) * cost_multiplier).sum() / (1.0 * cost_multiplier.sum())
+
+    #@wraps(Layer.cost)
+    #def cost(self, Y, Y_hat):
+    #
+    #    return self.cost_from_cost_matrix(self.cost_matrix(Y, Y_hat))
+    #
+    #@wraps(Layer.cost_from_cost_matrix)
+    #def cost_from_cost_matrix(self, cost_matrix):
+    #
+    #    return cost_matrix.sum(axis=1).mean()
+    #
+    #@wraps(Layer.cost_matrix)
+    #def cost_matrix(self, Y, Y_hat):
+    #
+    #    return T.sqr(Y - Y_hat)
