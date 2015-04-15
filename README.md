@@ -8,10 +8,10 @@ Tanel Alumäe. Neural network phone duration model for speech recognition.
 Interspeech 2014, Singapore.
 https://phon.ioc.ee/dokuwiki/lib/exe/fetch.php?media=people:tanel:icassp2014-durmodel.pdf
 
-The neural model has been tested on English, Estonian and Finnish.
+The duration model has been tested on English, Estonian and Finnish.
 
 We provide a [recipe for the TEDLIUM dataset](run_tedlium.sh). The baseline system uses online 
-multisplice speed-perturbed DNN models and rescores the lattices with large language model from Cantab Research. Duration model decreases 
+multisplice speed-perturbed DNN models, with rescoring of the lattices with large language model from Cantab Research. Duration model decreases 
 WER from 12.7% to 12.1% for the development set and from 11.7% to 11.0% for the test set.
 
 
