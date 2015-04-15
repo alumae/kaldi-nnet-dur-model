@@ -11,10 +11,8 @@ https://phon.ioc.ee/dokuwiki/lib/exe/fetch.php?media=people:tanel:icassp2014-dur
 The neural model has been tested on English, Estonian and Finnish.
 
 We provide a [recipe for the TEDLIUM dataset](run_tedlium.sh). The baseline system uses online 
-multisplice speed-perturbed DNN models and rescores the lattices with  
-large language model from Cantab Research. Duration model decreases 
-WER from 12.7% to 12.1% for the development
-set and from 11.7% to 11.0% for the test set.
+multisplice speed-perturbed DNN models and rescores the lattices with large language model from Cantab Research. Duration model decreases 
+WER from 12.7% to 12.1% for the development set and from 11.7% to 11.0% for the test set.
 
 
 DEPENDENCIES
@@ -67,10 +65,10 @@ CITING
 
 You can cite the following paper if you use this software:
 
-@InProceedings{alumae2014,
-  author={Alum\"{a}e, Tanel},
-  title={Neural network phone duration model for speech recognition},
-  booktitle={Interspeech 2014},
-  address={Singapore},
-  year=2014
-}
+    @InProceedings{alumae2014,
+      author={Alum\"{a}e, Tanel},
+      title={Neural network phone duration model for speech recognition},
+      booktitle={Interspeech 2014},
+      address={Singapore},
+      year=2014
+    }
