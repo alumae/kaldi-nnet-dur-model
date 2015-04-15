@@ -111,3 +111,5 @@ fi
 
 #After rescoring with the duration model:
 #$ for x in exp/nnet2_online/*/decode*dur-rescore; do [ -d $x ] && grep Sum $x/s*/score_*/*.sys | utils/best_wer.sh; done 2>/dev/null | grep test
+
+#%WER 10.9 | 1155 27512 | 90.8 6.9 2.3 1.8 11.0 78.6 | -0.351 | exp/nnet2_online/nnet_ms_sp_online/decode_test_utt_offline.rescore.dur-rescore/s0.2_p0.11/score_10_0.0/ctm.filt.filt.sys
