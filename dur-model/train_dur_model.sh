@@ -110,8 +110,8 @@ if [ $stage -le 5 ]; then
   H1_DIM=$h1_dim \
   envsubst > $dir/durmodel.yaml
   $cuda_cmd $dir/log/train.log \
-    PYTHONPATH=dur-model/python/pylearn2/ \
-    $pylearn_dir/pylearn2/scripts/train.py $dir/durmodel.yaml || exit 1;
+    PYTHONPATH=\"$PYTHONPATH:./dur-model/python/pylearn2/\" \
+    pylearn2-train $dir/durmodel.yaml || exit 1;
  
 
 fi
