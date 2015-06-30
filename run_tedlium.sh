@@ -26,7 +26,7 @@ decode_nj=8      # Must be the same as when decoding using the baseline
 stage=0 # resume training with --stage=N
 pylearn_dir=~/tools/pylearn2
 # Aggregating traing data for duration model needs more RAM than default in our SLURM cluster
-aggregate_data_args="--mem=8g"
+aggregate_data_args="--mem 8g"
 
 left_context=4
 right_context=2
