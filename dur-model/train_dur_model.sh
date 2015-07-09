@@ -15,6 +15,8 @@ aggregate_data_args=
 left_context=3
 right_context=3
 
+iter=final
+
 h0_dim=300
 h1_dim=300
 
@@ -54,7 +56,7 @@ fi
 
 # Create lattices from aligned training data
 if [ $stage -le 1 ]; then
-  dur-model/ali_to_phone_lattice.sh --nj $nj --cmd "$cmd" \
+  dur-model/ali_to_phone_lattice.sh --nj $nj --cmd "$cmd" --iter ${iter} \
     $data $lang $alidir ${alidir}_phone_lat || exit 1;
 fi
 
@@ -69,7 +71,7 @@ if [ $stage -le 2 ]; then
   echo "Converting phone-aligned training data to duration model training data"
   mkdir -p $dir
   # Save transition model in text form
-  show-transitions $lang/phones.txt $alidir/final.mdl > $dir/transitions.txt || exit 1;
+  show-transitions $lang/phones.txt $alidir/${iter}.mdl > $dir/transitions.txt || exit 1;
 
   $cmd JOB=1:$nj $dir/log/lat_to_data.JOB.log \
     dur-model/python/lat-model/lat_to_data.py \

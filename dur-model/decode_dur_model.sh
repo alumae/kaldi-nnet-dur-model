@@ -23,6 +23,7 @@ per_utt=false
 score_cmd=./local/score.sh
 stage=0
 
+iter=final
 echo "$0 $@"  # Print the command line for logging
 
 [ -f path.sh ] && . ./path.sh # source the path.
@@ -66,7 +67,7 @@ if [ $stage -le 0 ]; then
   mkdir -p $dur_model_dir/decode/log
   $cmd JOB=1:$nj $decode_dir/log/lattice-to-phone-lattice.JOB.log \
     lattice-align-words $graphdir/phones/word_boundary.int \
-      $src_decode_dir/../final.mdl "ark:gunzip -c $src_decode_dir/lat.JOB.gz \|" ark,t:- \| \
+      $src_decode_dir/../${iter}.mdl "ark:gunzip -c $src_decode_dir/lat.JOB.gz \|" ark,t:- \| \
      gzip -c \> $decode_dir/ali_lat.JOB.gz || exit 1
 fi
 
@@ -115,7 +116,7 @@ if [ $stage -le 2 ]; then
       echo "$0: Using scale $scale and phone penalty $penalty to rescore the lattices"
       extended_decode_dir=${decode_dir}/s${scale}_p${penalty};
       mkdir -p $extended_decode_dir;      
-      cp ${src_decode_dir}/../final.mdl ${extended_decode_dir}/../final.mdl
+      cp ${src_decode_dir}/../${iter}.mdl ${extended_decode_dir}/../${iter}.mdl
       cp ${src_decode_dir}/num_jobs ${extended_decode_dir}/num_jobs
       $cmd JOB=1:$nj $extended_decode_dir/log/extended_lat_to_lat.JOB.log \
         set -o pipefail \; \
