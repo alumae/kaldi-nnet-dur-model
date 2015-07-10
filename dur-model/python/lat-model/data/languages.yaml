@@ -1,3 +1,9 @@
+PASHTO:
+    phoneme_classes:
+      vowel: ['@', 'A', 'a', 'e', 'i', 'i:', 'o', 'u', 'u:']
+      consonants: ['4', 'C', 'G', 'J', 'N', 'S', 'Z', 'b', 'd', 'dZ', 'd`', 'dz', 'f', 'g', 'h', 'j', 'j\', 'k', 'l', 'm', 'n', 'n`', 'p', 'q', 'r`', 's', 's`', 't', 'tS', 't`', 'ts', 'w', 'x', 'z', 'z`']
+      stop: ['?']
+
 ENGLISH:
     #syllabifier_conf:
     #    consonants: ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH']

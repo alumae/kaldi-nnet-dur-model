@@ -2,7 +2,7 @@
 
 cmd=run.pl
 nj=4
-
+iter=final
 echo "$0 $@"  # Print the command line for logging
 
 [ -f path.sh ] && . ./path.sh # source the path.
@@ -35,7 +35,7 @@ if ! [ $nj -eq `cat $alidir/num_jobs` ]; then
 fi
 
 
-model=$alidir/final.mdl # assume model one level up from decoding dir.
+model=$alidir/${iter}.mdl # assume model one level up from decoding dir.
 
 for f in $lang/words.txt $lang/phones/word_boundary.int \
      $model $alidir/ali.1.gz $lang/oov.int; do
