@@ -21,6 +21,7 @@ DEPENDENCIES
   * Python 2.6 (with argparse) or 2.7
   * Theano
   * Pylearn2
+  * sklearn
   
 Theano can be installed using python's `pip` utility:
 
