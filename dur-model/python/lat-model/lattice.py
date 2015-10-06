@@ -5,6 +5,8 @@ Created on Sep 9, 2013
 @author: tanel
 '''
 
+import sys
+
 class Arc:
     def __init__(self, id, start, end, word_id, score1, score2, phone_ids):
         self.id = id
@@ -68,35 +70,43 @@ def set_next_arc_start_frames(arc, arcs_by_start, start_frame):
 
 
 def parse_aligned_lattice(lines):
+    line = ''
+    name = ''
+    try: 
+        name = lines[0].strip()
+        arcs = []
+        final_states = []
+        i = 0
+        arcs_by_start = {}
+        for line in lines[1:]:
+            ss = line.split()
+            if len(ss) == 4:
+                start = int(ss[0])
+                end = int(ss[1])
+                word_id = int(ss[2])
+                weight_parts = ss[3].split(",")
+                score1 = float(weight_parts[0])
+                score2 = float(weight_parts[1])
+                if len(weight_parts[2]) > 0:
+                    frames = [int(f) for f in weight_parts[2].split("_")]
+                else:
+                    frames = []
+                arc = Arc(i, start, end, word_id, score1, score2, frames)
+                if start == 0:
+                    arc.start_frame = 0
+                arcs.append(arc)
+                arcs_by_start.setdefault(arc.start, []).append(arc)
 
-    name = lines[0].strip()
-    arcs = []
-    final_states = []
-    i = 0
-    arcs_by_start = {}
-    for line in lines[1:]:
-        ss = line.split()
-        if len(ss) == 4:
-            start = int(ss[0])
-            end = int(ss[1])
-            word_id = int(ss[2])
-            weight_parts = ss[3].split(",")
-            score1 = float(weight_parts[0])
-            score2 = float(weight_parts[1])
-            frames = [int(f) for f in weight_parts[2].split("_")]
-            arc = Arc(i, start, end, word_id, score1, score2, frames)
-            if start == 0:
-                arc.start_frame = 0
-            arcs.append(arc)
-            arcs_by_start.setdefault(arc.start, []).append(arc)
+                i += 1
+            else:
+                final_states.append(int(ss[0]))
 
-            i += 1
-        else:
-            final_states.append(int(ss[0]))
+        #for arc in arcs_by_start[0]:
+        #    set_next_arc_start_frames(arc, arcs_by_start, 0)
 
-    #for arc in arcs_by_start[0]:
-    #    set_next_arc_start_frames(arc, arcs_by_start, 0)
-
-    lat = Lattice(name, arcs, final_states)
-    return lat
+        lat = Lattice(name, arcs, final_states)
+        return lat
+    except:
+        e = sys.exc_info()[0]
+        raise Exception("Failed to process lattice %s: error at line %s (%s)" % (name, line, e))
 

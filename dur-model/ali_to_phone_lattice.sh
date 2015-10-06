@@ -37,23 +37,38 @@ fi
 
 model=$alidir/${iter}.mdl # assume model one level up from decoding dir.
 
-for f in $lang/words.txt $lang/phones/word_boundary.int \
+for f in $lang/words.txt \
      $model $alidir/ali.1.gz $lang/oov.int; do
   [ ! -f $f ] && echo "$0: expecting file $f to exist" && exit 1;
 done
+
+if [ -f $lang/phones/word_boundary.int ]; then
+  word_align_method="word_boundary"
+elif [ -f $lang/phones/align_lexicon.int ]; then
+  word_align_method="align_lexicon"
+else
+   echo "$0: expecting either $lang/phones/word_boundary.int or $lang/phones/align_lexicon.int to exist" 
+   exit 1; 
+fi
 
 oov=`cat $lang/oov.int` || exit 1;
 
 mkdir -p $dir/log
 
-
-
-$cmd JOB=1:$nj $dir/log/ali_to_phone_lattice.JOB.log \
-   linear-to-nbest "ark:gunzip -c $alidir/ali.JOB.gz|" \
-     "ark:utils/sym2int.pl --map-oov $oov -f 2- $lang/words.txt < $data/text |" \
-     '' '' ark:- \| \
-    lattice-align-words $lang/phones/word_boundary.int $model ark:- ark,t:- \| \
-    gzip -c '>' $dir/ali-lat.JOB.gz || exit 1;
-    
+if [ "$word_align_method" == "word_boundary" ]; then
+  $cmd JOB=1:$nj $dir/log/ali_to_phone_lattice.JOB.log \
+     linear-to-nbest "ark:gunzip -c $alidir/ali.JOB.gz|" \
+       "ark:utils/sym2int.pl --map-oov $oov -f 2- $lang/words.txt < $data/text |" \
+       '' '' ark:- \| \
+      lattice-align-words --output-error-lats=true --output-if-empty=true $lang/phones/word_boundary.int $model ark:- ark,t:- \| \
+      gzip -c '>' $dir/ali-lat.JOB.gz || exit 1;
+else
+  $cmd JOB=1:$nj $dir/log/ali_to_phone_lattice.JOB.log \
+     linear-to-nbest "ark:gunzip -c $alidir/ali.JOB.gz|" \
+       "ark:utils/sym2int.pl --map-oov $oov -f 2- $lang/words.txt < $data/text |" \
+       '' '' ark:- \| \
+      lattice-align-words-lexicon --output-if-empty=true $lang/phones/align_lexicon.int $model ark:- ark,t:- \| \
+      gzip -c '>' $dir/ali-lat.JOB.gz || exit 1;
+fi  
 
 echo "$0: done getting phone alignments."

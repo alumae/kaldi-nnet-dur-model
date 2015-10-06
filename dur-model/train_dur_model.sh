@@ -72,9 +72,10 @@ if [ $stage -le 2 ]; then
   mkdir -p $dir
   # Save transition model in text form
   show-transitions $lang/phones.txt $alidir/${iter}.mdl > $dir/transitions.txt || exit 1;
-
+   
   $cmd JOB=1:$nj $dir/log/lat_to_data.JOB.log \
-    dur-model/python/lat-model/lat_to_data.py \
+    THEANO_FLAGS=\"device=cpu\" \
+    python2.7 dur-model/python/lat-model/lat_to_data.py \
       --left-context $left_context \
       --right-context $right_context \
       --language $language \
@@ -92,6 +93,7 @@ if [ $stage -le 3 ]; then
   $cmd $aggregate_data_args $dir/log/aggregate_data.log \
   for i in `seq 1 $nj`\; do \
     echo $dir/ali-lat.\$i.pkl.joblib $dir/ali-lat.\$i.features\; done \| \
+    THEANO_FLAGS=\"device=cpu\" \
     xargs dur-model/python/lat-model/aggregate_data.py --shuffle --save $dir/ali-lat.pkl.joblib --savedev $dir/ali-lat_dev.pkl.joblib --write-features $dir/ali-lat.features || exit 1;
   rm $dir/ali-lat.*.pkl.joblib $dir/ali-lat.*.features
 fi
@@ -113,7 +115,8 @@ if [ $stage -le 5 ]; then
   envsubst > $dir/durmodel.yaml
   $cuda_cmd $dir/log/train.log \
     PYTHONPATH=\"$PYTHONPATH:./dur-model/python/pylearn2/\" \
-    pylearn2-train $dir/durmodel.yaml || exit 1;
+    THEANO_FLAGS=\"device=gpu\" \
+    $pylearn_dir/bin/pylearn2-train $dir/durmodel.yaml || exit 1;
  
 
 fi

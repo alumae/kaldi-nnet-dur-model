@@ -52,7 +52,7 @@ if __name__ == '__main__':
     print >> sys.stderr, "Reading non-silence phonemes"
     nonsilence_phonemes = set()
     for l in open(args.nonsilence):
-        nonsilence_phonemes.add(l.partition("_")[0])
+        nonsilence_phonemes.add(l.strip().partition("_")[0])
 
     print >> sys.stderr, "Reading words.txt"
     word_list = []
@@ -188,7 +188,9 @@ if __name__ == '__main__':
                                                                    language=args.language, stress_dict=stress_dict)
                         #print features_and_dur_seq
                         features_and_durs.append(features_and_dur_seq)
-                    full_features_and_durs.extend(durmodel_utils.make_linear(features_and_durs, nonsilence_phonemes, utt2spkid[lat.name] if utt2spkid else 0))
+                    utt_full_features_and_durs = durmodel_utils.make_linear(features_and_durs, nonsilence_phonemes, utt2spkid[lat.name] if utt2spkid else 0)
+                    #print utt_full_features_and_durs
+                    full_features_and_durs.extend(utt_full_features_and_durs)
                 except IOError as e:
                     print >> sys.stderr, "I/O error({0}): {1} -- {2} when processing lattice {3}".format(e.errno, e.strerror, e.message,  lat.name)
                 except ValueError as e:
@@ -196,7 +198,7 @@ if __name__ == '__main__':
 
                 num_sentences_read += 1
                 sentence_lines = []
-        print >> sys.stderr, "Read alignments for %d utterances" % num_sentences_read
+        print >> sys.stderr, "Read alignments for %d utterances" % len(full_features_and_durs)
 
         feature_dict = OrderedDict()
         if args.read_features_filename:

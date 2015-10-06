@@ -21,6 +21,7 @@ ignore_speakers=true
 per_utt=false
 
 score_cmd=./local/score.sh
+scoring_opts="--min-lmwt 9 --max-lmwt 15"
 stage=0
 
 iter=final
@@ -63,12 +64,34 @@ fi
 
 # Convert decoding lattices to word-aligned lattices
 if [ $stage -le 0 ]; then
+
+  if [ -f $graphdir/phones/word_boundary.int ]; then
+    word_align_method="word_boundary"
+  elif [ -f $graphdir/phones/align_lexicon.int ]; then
+    word_align_method="align_lexicon"
+  else
+     echo "$0: expecting either $graphdir/phones/word_boundary.int or $lang/phones/align_lexicon.int to exist" 
+     exit 1; 
+  fi
+
   echo "$0: Converting decoding lattices to word-aligned lattices..."
   mkdir -p $dur_model_dir/decode/log
-  $cmd JOB=1:$nj $decode_dir/log/lattice-to-phone-lattice.JOB.log \
-    lattice-align-words $graphdir/phones/word_boundary.int \
-      $src_decode_dir/../${iter}.mdl "ark:gunzip -c $src_decode_dir/lat.JOB.gz \|" ark,t:- \| \
-     gzip -c \> $decode_dir/ali_lat.JOB.gz || exit 1
+  if [ "$word_align_method" == "word_boundary" ]; then  
+    $cmd JOB=1:$nj $decode_dir/log/lattice-to-phone-lattice.JOB.log \
+      lattice-align-words \
+        --output-error-lats \
+        $graphdir/phones/word_boundary.int \
+        $src_decode_dir/../${iter}.mdl "ark:gunzip -c $src_decode_dir/lat.JOB.gz \|" ark,t:- \| \
+       gzip -c \> $decode_dir/ali_lat.JOB.gz || exit 1
+  else
+    $cmd JOB=1:$nj $decode_dir/log/lattice-to-phone-lattice.JOB.log \
+      lattice-align-words-lexicon \
+        --output-error-lats=true \
+        --output-if-empty=true \
+        $graphdir/phones/align_lexicon.int \
+        $src_decode_dir/../${iter}.mdl "ark:gunzip -c $src_decode_dir/lat.JOB.gz \|" ark,t:- \| \
+       gzip -c \> $decode_dir/ali_lat.JOB.gz || exit 1    
+  fi
 fi
 
 
@@ -94,8 +117,9 @@ if [ $stage -le 1 ]; then
   $cuda_cmd JOB=1:$nj $decode_dir/log/process_lattice.JOB.log \
     set -o pipefail \; \
     zcat $decode_dir/ali_lat.JOB.gz \| \
+    THEANO_FLAGS=\"device=gpu\" \
     PYTHONPATH=dur-model/python/pylearn2/ \
-      ./dur-model/python/lat-model/process_lattice.py \
+      python2.7 dur-model/python/lat-model/process_lattice.py \
         --left-context $left_context \
         --right-context $right_context \
         --read-features $dur_model_dir/ali-lat.features \
@@ -121,7 +145,8 @@ if [ $stage -le 2 ]; then
       $cmd JOB=1:$nj $extended_decode_dir/log/extended_lat_to_lat.JOB.log \
         set -o pipefail \; \
         zcat $decode_dir/ali_lat_extended.JOB.gz \| \
-        dur-model/python/lat-model/extended_lat_to_lat.py $scale $penalty \| \
+        THEANO_FLAGS=\"device=cpu\" \
+        python2.7 dur-model/python/lat-model/extended_lat_to_lat.py $scale $penalty \| \
         gzip -c \> $extended_decode_dir/lat.JOB.gz || exit 1
         
       if ! $skip_scoring ; then
